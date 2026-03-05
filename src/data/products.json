@@ -1,0 +1,8 @@
+[
+  { "id": "p1", "slug": "urban-puffer-jacket", "title": "Urban Puffer Jacket", "price": 129.0, "compareAtPrice": 159.0, "tag": "Sale" },
+  { "id": "p2", "slug": "premium-knit-sweater", "title": "Premium Knit Sweater", "price": 89.0, "tag": "New" },
+  { "id": "p3", "slug": "minimal-wool-coat", "title": "Minimal Wool Coat", "price": 199.0, "tag": "Premium" },
+  { "id": "p4", "slug": "everyday-hoodie", "title": "Everyday Hoodie", "price": 59.0, "tag": "Hot" },
+  { "id": "p5", "slug": "wide-leg-trousers", "title": "Wide-leg Trousers", "price": 79.0 },
+  { "id": "p6", "slug": "classic-denim-jacket", "title": "Classic Denim Jacket", "price": 99.0 }
+]
