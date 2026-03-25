@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -17,11 +18,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             <PromoBar
-              text="İlk üyeliğe özel %15 indirim"
+              text="15% off your first order"
               repeatCount={10}
               speedSeconds={45}
             />
-            <Navbar transparentOnTop />
+            <Suspense fallback={<div className="fixed left-0 top-9 z-50 h-16 w-full" aria-hidden="true" />}>
+              <Navbar transparentOnTop />
+            </Suspense>
             <main className="min-h-[70vh]">{children}</main>
             <Footer />
           </CartProvider>

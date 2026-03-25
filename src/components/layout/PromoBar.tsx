@@ -7,15 +7,15 @@ type Props = {
   repeatCount?: number;
   speedSeconds?: number;
   className?: string;
-  heightClassName?: string; // navbar offset için sabit yükseklik istersen
+  heightClassName?: string;
 };
 
 export default function PromoBar({
-  text = "İlk üyeliğe özel %15 indirim",
+  text = "15% off your first order",
   repeatCount = 10,
   speedSeconds = 14,
   className = "",
-  heightClassName = "h-9", // ~36px
+  heightClassName = "h-9",
 }: Props) {
   return (
     <div
@@ -26,7 +26,6 @@ export default function PromoBar({
       ].join(" ")}
     >
       <div className="relative h-full overflow-hidden">
-        {/* edge fades */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-black to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-black to-transparent" />
 
@@ -35,9 +34,9 @@ export default function PromoBar({
           style={{ animationDuration: `${speedSeconds}s` }}
         >
           <div className="flex h-full items-center gap-20 px-6">
-            {Array.from({ length: repeatCount }).map((_, i) => (
+            {Array.from({ length: repeatCount }).map((_, index) => (
               <span
-                key={`a-${i}`}
+                key={`a-${index}`}
                 className="whitespace-nowrap text-xs font-medium tracking-wide"
               >
                 {text}
@@ -46,9 +45,9 @@ export default function PromoBar({
           </div>
 
           <div className="flex h-full items-center gap-20 px-6" aria-hidden="true">
-            {Array.from({ length: repeatCount }).map((_, i) => (
+            {Array.from({ length: repeatCount }).map((_, index) => (
               <span
-                key={`b-${i}`}
+                key={`b-${index}`}
                 className="whitespace-nowrap text-xs font-medium tracking-wide"
               >
                 {text}

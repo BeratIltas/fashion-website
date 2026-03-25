@@ -3,6 +3,7 @@
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { playfair } from '@/app/fonts';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -49,9 +50,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand Section */}
           <div>
-            <h4 className="text-xl font-bold mb-4">Miragé</h4>
+            <h4 className={`text-2xl font-bold mb-4 ${playfair.className}`}>Miragé</h4>
             <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-              A sophisticated menswear accessories designed for modern man with individual sense.
+              A sophisticated menswear accessories designed for modern men with individual sense.
             </p>
             <Link href="/shop">
               <button className="px-6 py-2.5 border border-white rounded-full text-sm font-medium hover:bg-white hover:text-black transition">
@@ -142,7 +143,7 @@ export default function Footer() {
 
         {/* Large Brand Name */}
         <div className="text-center mb-8">
-          <h2 className="text-[80px] md:text-[120px] lg:text-[160px] font-bold leading-none tracking-tight">
+          <h2 className={`text-[80px] md:text-[120px] lg:text-[160px] font-bold leading-none tracking-tight ${playfair.className}`}>
             Miragé
           </h2>
         </div>
@@ -150,7 +151,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="text-center pt-8 border-t border-neutral-800">
           <p className="text-neutral-500 text-sm">
-            © {new Date().getFullYear()} Miragé. All rights reserved.
+            © {new Date().getFullYear()} <span className={playfair.className}>Miragé</span>. All rights reserved.
           </p>
         </div>
       </div>

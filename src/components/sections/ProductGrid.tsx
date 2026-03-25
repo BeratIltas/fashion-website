@@ -3,6 +3,7 @@ import Link from "next/link";
 import Container from "@/components/ui/Container";
 import type { Product } from "@/lib/api";
 import AddToCartButton from "@/components/cart/AddToCartButton";
+import FavoriteButton from "@/components/ui/FavoriteButton";
 
 function starCount(ratingStars: string): number {
   const match = ratingStars.match(/^([\d.]+)/);
@@ -17,7 +18,7 @@ export default function ProductGrid({
   products: Product[];
 }) {
   return (
-    <section className="mt-14">
+    <section className="mt-14 pt-12">
       <Container>
         <div className="mb-5 flex items-end justify-between gap-4">
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
@@ -43,9 +44,14 @@ export default function ProductGrid({
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   )}
-                  <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs text-neutral-700 backdrop-blur">
+                  <div className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1 text-xs text-neutral-700 backdrop-blur">
                     ★ {starCount(p.ratingStars).toFixed(1)}
                   </div>
+                  <FavoriteButton
+                    asin={p.asin}
+                    initialFavorite={p.favorite}
+                    className="absolute right-3 top-3 z-10 h-8 w-8"
+                  />
                 </div>
               </Link>
 

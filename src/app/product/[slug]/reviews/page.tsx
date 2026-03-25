@@ -20,7 +20,7 @@ export default async function ProductReviewsPage({ params }: PageProps) {
 
   return (
     <Container>
-      <div className="py-24 space-y-8">
+      <div className="pt-28 space-y-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Reviews</h1>
           <p className="mt-2 text-sm text-neutral-600 max-w-xl">

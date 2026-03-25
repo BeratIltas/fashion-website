@@ -1,10 +1,10 @@
 import OrbitGallery from "@/components/sections/OrbitGallery";
 import Hero from "@/components/sections/Hero";
 import ProductGrid from "@/components/sections/ProductGrid";
-import { getProducts } from "@/lib/api";
+import { filterProducts } from "@/lib/api";
 
 export default async function HomePage() {
-  const products = await getProducts();
+  const products = await filterProducts({}, { page: 0, size: 8 });
 
   const orbitItems = [
     { id: "1", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },

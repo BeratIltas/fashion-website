@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
-import { getProduct, getProducts } from "@/lib/api";
+import { filterProducts, getProduct } from "@/lib/api";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import ProductGallery from "@/components/product/ProductGallery";
+import FavoriteButton from "@/components/ui/FavoriteButton";
 
 export async function generateStaticParams() {
-  const products = await getProducts();
+  const products = await filterProducts({}, {});
   return products.map((p) => ({ slug: p.asin }));
 }
 
@@ -31,7 +32,7 @@ export default async function ProductPage({
 
   return (
     <Container>
-      <div className="grid gap-10 py-10 md:grid-cols-2">
+      <div className="grid gap-10 pt-28 py-10 md:grid-cols-2">
         {/* Image Gallery */}
         <ProductGallery title={product.title} images={product.allImages} />
 
@@ -39,9 +40,16 @@ export default async function ProductPage({
         <div>
           <div className="text-sm text-neutral-500">{product.brandName}</div>
 
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight leading-snug">
-            {product.title}
-          </h1>
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <h1 className="text-2xl font-semibold tracking-tight leading-snug">
+              {product.title}
+            </h1>
+            <FavoriteButton
+              asin={product.asin}
+              initialFavorite={product.favorite}
+              className="h-10 w-10 shrink-0 border border-neutral-200"
+            />
+          </div>
 
           {/* Rating */}
           <Link

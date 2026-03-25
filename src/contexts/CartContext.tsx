@@ -41,7 +41,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         try {
             const data = await apiAdd(asin, quantity);
-            setCart(data);
+            if (data) {
+                setCart(data);
+            }
         } catch (error) {
             console.error("Failed to add item to cart", error);
         } finally {
@@ -53,7 +55,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         try {
             const data = await apiUpdate(asin, quantity);
-            setCart(data);
+            if (data) {
+                setCart(data);
+            }
         } catch (error) {
             console.error("Failed to update cart item", error);
         } finally {
@@ -65,7 +69,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         try {
             const data = await apiRemove(asin);
-            setCart(data);
+            if (data) {
+                setCart(data);
+            }
         } catch (error) {
             console.error("Failed to remove cart item", error);
         } finally {

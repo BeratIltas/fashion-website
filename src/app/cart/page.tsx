@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import { useCart } from "@/contexts/CartContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /** allImages'ı array'e çevir */
 function parseAllImages(allImages: unknown): string[] {
@@ -30,7 +31,7 @@ function parseAllImages(allImages: unknown): string[] {
       try {
         const normalized = s.replace(/'/g, '"');
         const parsed = JSON.parse(normalized);
-        
+
         if (Array.isArray(parsed)) {
           const filtered = parsed.filter((x) => typeof x === "string" && x.trim().length > 0);
           return filtered.length > 0 ? filtered : placeholder;
@@ -122,11 +123,10 @@ function ProductImageGallery({ images, title }: { images: string[]; title: strin
                   e.stopPropagation();
                   setCurrentIndex(idx);
                 }}
-                className={`h-1 rounded-full transition-all ${
-                  idx === currentIndex
+                className={`h-1 rounded-full transition-all ${idx === currentIndex
                     ? "w-3 bg-white"
                     : "w-1 bg-white/50 hover:bg-white/75"
-                }`}
+                  }`}
                 aria-label={`Go to image ${idx + 1}`}
               />
             ))}
@@ -138,6 +138,7 @@ function ProductImageGallery({ images, title }: { images: string[]; title: strin
 }
 
 export default function CartPage() {
+  const router = useRouter();
   const { cart, updateItem, removeItem, loading } = useCart();
 
   const handleQtyChange = (asin: string, qty: number) => {
@@ -245,8 +246,12 @@ export default function CartPage() {
 
           <p className="text-xs text-neutral-500">Taxes and shipping are calculated at checkout.</p>
 
-          <Button className="w-full mt-2" disabled={!cart || items.length === 0 || loading}>
-            Continue to checkout
+          <Button
+            className="w-full mt-2"
+            disabled={!cart || items.length === 0 || loading}
+            onClick={() => router.push("/checkout")}
+          >
+            Checkout
           </Button>
         </aside>
       </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Props = {
   asin: string;
@@ -17,6 +19,9 @@ export default function AddToCartButton({
   fullWidth,
   label = "Add to cart",
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useAuth();
   const { addItem, loading } = useCart();
   const [localLoading, startTransition] = useTransition();
   const [added, setAdded] = useState(false);
@@ -25,6 +30,13 @@ export default function AddToCartButton({
 
   const handleClick = () => {
     if (!asin) return;
+
+    if (!user) {
+      const redirect = encodeURIComponent(pathname || "/");
+      router.push(`/login?redirect=${redirect}`);
+      return;
+    }
+
     setAdded(false);
     startTransition(async () => {
       await addItem(asin, quantity);

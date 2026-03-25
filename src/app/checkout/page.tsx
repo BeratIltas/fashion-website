@@ -4,22 +4,42 @@ import Image from "next/image";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/contexts/CartContext";
+import { useState } from "react";
+import { checkoutOrder } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-  const { cart } = useCart();
+  const { cart, refresh } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const router = useRouter();
+
+  const handleCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsCheckingOut(true);
+    try {
+      await checkoutOrder();
+      await refresh();
+      router.push("/orders");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to checkout. Please try again or log in.");
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   const items = cart?.items ?? [];
 
   return (
     <Container>
-      <div className="grid gap-10 pt-28 pb-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid  gap-10 pt-28 pb-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Checkout</h1>
           <p className="mt-2 text-sm text-neutral-600">
             Enter your details to complete the order. Payment integration will be added later.
           </p>
 
-          <form className="mt-8 space-y-4">
+          <form onSubmit={handleCheckout} className="mt-8 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-neutral-600">First name</label>
@@ -72,7 +92,9 @@ export default function CheckoutPage() {
             </div>
 
             <div className="pt-4">
-              <Button type="button">Place order (demo)</Button>
+              <Button type="submit" disabled={isCheckingOut || items.length === 0}>
+                {isCheckingOut ? "Processing..." : "Place order"}
+              </Button>
             </div>
           </form>
         </div>
