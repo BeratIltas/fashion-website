@@ -15,7 +15,7 @@ export default function OrbitGallery({
 }) {
   const n = items.length;
 
-  // ✅ Sonsuz akış için 3 kopya
+  //  Sonsuz akış için 3 kopya
   const loopItems = useMemo(() => {
     if (n === 0) return [];
     return [...items, ...items, ...items];
@@ -48,7 +48,7 @@ export default function OrbitGallery({
     lastTime: 0,
   });
 
-  // ✅ Görünür aralık optimizasyonu için: önceki görünür index aralığı
+  //  Görünür aralık optimizasyonu için: önceki görünür index aralığı
   const vis = useRef({
     prevStart: 0,
     prevEnd: -1,
@@ -148,7 +148,7 @@ export default function OrbitGallery({
   }, [cfg, n]);
 
   // scheduleRender'in renderCards referansı güncel olsun
-  const scheduleRenderRef = useRef<( ) => void>(() => {});
+  const scheduleRenderRef = useRef<() => void>(() => { });
   useEffect(() => {
     scheduleRenderRef.current = () => {
       if (raf.current) return;

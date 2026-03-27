@@ -121,20 +121,20 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Phone size={18} className="text-neutral-400 mt-0.5 flex-shrink-0" />
-                <a href="tel:+353012657890" className="text-neutral-400 hover:text-white transition text-sm">
-                  +353 012 657 890
+                <a href="tel:+902164442569" className="text-neutral-400 hover:text-white transition text-sm">
+                  +90 216 444 25 69
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <Mail size={18} className="text-neutral-400 mt-0.5 flex-shrink-0" />
                 <a href="mailto:Miragé.y@gmail.com" className="text-neutral-400 hover:text-white transition text-sm">
-                  Miragé.y@gmail.com
+                  Mirage@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-neutral-400 mt-0.5 flex-shrink-0" />
                 <span className="text-neutral-400 text-sm">
-                  Ballyroan, County Laois, Ireland
+                  Beykoz University, Istanbul
                 </span>
               </li>
             </ul>

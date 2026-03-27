@@ -56,7 +56,7 @@ export default function Hero() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/shop">
-              <Button className="bg-white text-black transition-transform duration-200 hover:scale-[1.02] hover:bg-white/90">
+              <Button className="bg-white !text-neutral-950 transition-transform duration-200 hover:scale-[1.02] hover:bg-white/90">
                 Shop New Arrivals
               </Button>
             </Link>

@@ -260,6 +260,12 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
     scheduleMegaMenuClose();
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setOpenMenu(null);
+    window.location.reload();
+  };
+
   return (
     <>
       {megaMenuOpen && (
@@ -270,7 +276,7 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
         <Container>
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className={`text-2xl font-bold tracking-tight ${textClass} ${playfair.className}`}>
-              Mirage
+              Miragé
             </Link>
             <nav className={`hidden items-center gap-10 text-sm font-medium md:flex ${subtleTextClass}`}>
               <Link className={navLinkClass} href="/" onMouseEnter={closeMegaMenu}>
@@ -517,8 +523,7 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
                         <button
                           className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-sm text-red-600 hover:bg-neutral-50"
                           onClick={() => {
-                            logout();
-                            setOpenMenu(null);
+                            void handleLogout();
                           }}
                         >
                           <LogOut size={16} />
@@ -594,23 +599,23 @@ function MegaMenu({
             {menu.columns.map((column) => (
               <div key={column.title} className="border-r border-neutral-200 px-8 py-8 last:border-r-0">
                 <div className="text-[11px] uppercase tracking-[0.24em] text-neutral-400">{column.title}</div>
-                  <div className="mt-4 grid gap-3">
-                    {column.links.map((link) => (
-                      <button
-                        key={link.label}
-                        type="button"
-                        className="text-left text-sm font-medium text-neutral-900 transition hover:translate-x-1 hover:text-neutral-500"
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          onNavigate(link.href);
-                        }}
-                        onClick={() => onNavigate(link.href)}
-                      >
-                        {link.label}
-                      </button>
-                    ))}
-                  </div>
+                <div className="mt-4 grid gap-3">
+                  {column.links.map((link) => (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="text-left text-sm font-medium text-neutral-900 transition hover:translate-x-1 hover:text-neutral-500"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        onNavigate(link.href);
+                      }}
+                      onClick={() => onNavigate(link.href)}
+                    >
+                      {link.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
             ))}
 
             <div className="relative min-h-[23rem] border-l border-neutral-200 bg-neutral-100">
@@ -633,3 +638,5 @@ function MegaMenu({
     </div>
   );
 }
+
+

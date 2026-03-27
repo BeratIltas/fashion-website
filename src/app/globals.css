@@ -27,8 +27,59 @@ body {
   transform: translate3d(0, 0, 0);
 }
 
+.auth-success-panel {
+  animation: auth-success-panel-in 0.45s ease-out both;
+}
+
+@keyframes auth-success-panel-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.auth-success-ring {
+  animation: auth-success-ring 1.3s ease-out infinite;
+}
+
+@keyframes auth-success-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.82);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+.auth-confetti {
+  animation: auth-confetti-fall 1.7s ease-in forwards;
+}
+
+@keyframes auth-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--confetti-x, 0), 120px, 0) rotate(var(--confetti-rotate, 180deg));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .promo-marquee-track {
+  .promo-marquee-track,
+  .auth-success-panel,
+  .auth-success-ring,
+  .auth-confetti {
     animation: none;
   }
 }

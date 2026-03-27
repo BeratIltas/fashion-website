@@ -12,7 +12,7 @@ import {
   updateProfile,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { auth, ensureAuthPersistence, facebookProvider, googleProvider } from "@/lib/firebase";
+import { auth, ensureAuthPersistence, googleProvider } from "@/lib/firebase";
 import { login as apiLogin, type AuthUser } from "@/lib/api";
 
 type AuthAction = "email-login" | "email-register" | "google" | "facebook" | "reset" | "logout";
@@ -38,7 +38,6 @@ type AuthContextValue = {
     lastName: string;
   }) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<string>;
   logout: () => Promise<void>;
 };
@@ -143,34 +142,34 @@ function getAuthErrorMessage(error: unknown) {
 
   switch (code) {
     case "auth/email-already-in-use":
-      return "Bu e-posta adresiyle zaten bir hesap bulunuyor.";
+      return "An account already exists for this email address.";
     case "auth/invalid-email":
-      return "Geçerli bir e-posta adresi gir.";
+      return "Enter a valid email address.";
     case "auth/weak-password":
-      return "Şifren en az 6 karakter olmalı.";
+      return "Your password must be at least 6 characters.";
     case "auth/invalid-credential":
     case "auth/user-not-found":
     case "auth/wrong-password":
-      return "E-posta veya şifre hatalı görünüyor.";
+      return "Your email or password looks incorrect.";
     case "auth/popup-closed-by-user":
-      return "Sosyal giriş penceresi kapatıldı. Tekrar deneyebilirsin.";
+      return "The social sign-in window was closed. Please try again.";
     case "auth/popup-blocked":
-      return "Tarayıcı açılır pencereyi engelledi. Lütfen pop-up izni ver.";
+      return "Your browser blocked the popup. Please allow popups and try again.";
     case "auth/account-exists-with-different-credential":
-      return "Bu e-posta farklı bir giriş yöntemiyle zaten kayıtlı.";
+      return "This email is already connected to a different sign-in method.";
     case "auth/too-many-requests":
-      return "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.";
+      return "Too many attempts were made. Please wait a few minutes and try again.";
     case "auth/network-request-failed":
-      return "Ağ bağlantısı kurulamadı. İnternetini kontrol edip tekrar dene.";
+      return "We could not reach the network. Check your connection and try again.";
     case "auth/operation-not-allowed":
-      return "Bu giriş yöntemi Firebase tarafında henüz etkinleştirilmemiş.";
+      return "This sign-in method is not enabled in Firebase yet.";
     case "auth/unauthorized-domain":
-      return "Bu domain Firebase Authentication içinde yetkilendirilmemiş.";
+      return "This domain has not been authorized in Firebase Authentication.";
     default:
       if (error instanceof Error && error.message.trim()) {
         return error.message;
       }
-      return "Kimlik doğrulama sırasında beklenmeyen bir sorun oluştu.";
+      return "An unexpected authentication error occurred.";
   }
 }
 
@@ -195,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (firebaseUser: FirebaseUser, options: SessionSyncOptions) => {
       const email = firebaseUser.email?.trim();
       if (!email) {
-        throw new Error("Firebase hesabında kullanılabilir bir e-posta adresi bulunamadı.");
+        throw new Error("No usable email address was found on the Firebase account.");
       }
 
       const identityProvider = options.identityProvider ?? resolveIdentityProvider(firebaseUser);
@@ -386,42 +385,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [clearSession, syncBackendSession]);
 
-  const loginWithFacebook = useCallback(async () => {
-    setBusyAction("facebook");
-    interactiveAuthRef.current = true;
-    let signedInUser: FirebaseUser | null = null;
-
-    try {
-      await ensureAuthPersistence();
-      const result = await signInWithPopup(auth, facebookProvider);
-      signedInUser = result.user;
-      const isNewUser = getAdditionalUserInfo(result)?.isNewUser ?? false;
-
-      await syncBackendSession(result.user, {
-        authProvider: isNewUser ? "EMAIL_REGISTER" : "EMAIL_LOGIN",
-        identityProvider: "facebook.com",
-        isNewUser,
-      });
-    } catch (error) {
-      if (signedInUser) {
-        await firebaseSignOut(auth).catch(() => undefined);
-        clearSession();
-      }
-      throw new Error(getAuthErrorMessage(error));
-    } finally {
-      interactiveAuthRef.current = false;
-      setBusyAction(null);
-      setInitialized(true);
-    }
-  }, [clearSession, syncBackendSession]);
-
   const sendPasswordReset = useCallback(async (email: string) => {
     setBusyAction("reset");
 
     try {
       await ensureAuthPersistence();
       await sendPasswordResetEmail(auth, email.trim());
-      return "Şifre sıfırlama bağlantısı e-posta adresine gönderildi.";
+      return "Password reset link sent to your email address.";
     } catch (error) {
       throw new Error(getAuthErrorMessage(error));
     } finally {
@@ -451,7 +421,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithEmail,
         registerWithEmail,
         loginWithGoogle,
-        loginWithFacebook,
         sendPasswordReset,
         logout,
       }}
