@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
-import { LogIn, LogOut, Search, ShoppingBag, User, UserPlus } from "lucide-react";
+import { Bell, LogIn, LogOut, Megaphone, Search, ShoppingBag, User, UserPlus } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Container from "@/components/ui/Container";
 import { playfair } from "@/app/fonts";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getPublicAnnouncements, type PublicAnnouncement } from "@/lib/api";
 
 function getFirstImageSrc(allImages: unknown): string {
   const placeholder = "/placeholder.png";
@@ -50,6 +51,16 @@ function safePriceNumber(priceValue: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
+}
+
+function formatAnnouncementDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
 }
 
 function useOnClickOutsideMany(
@@ -159,8 +170,9 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [openMenu, setOpenMenu] = useState<"cart" | "profile" | "men" | "women" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"cart" | "notifications" | "profile" | "men" | "women" | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [announcements, setAnnouncements] = useState<PublicAnnouncement[]>([]);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -171,13 +183,14 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
 
   const profileRef = useRef<HTMLDivElement | null>(null);
   const cartRef = useRef<HTMLDivElement | null>(null);
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const menRef = useRef<HTMLDivElement | null>(null);
   const womenRef = useRef<HTMLDivElement | null>(null);
   const megaMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const megaMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useOnClickOutsideMany([profileRef, cartRef, searchRef, menRef, womenRef], () => {
+  useOnClickOutsideMany([profileRef, cartRef, notificationsRef, searchRef, menRef, womenRef], () => {
     setOpenMenu(null);
     setSearchOpen(false);
   });
@@ -198,6 +211,30 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    async function loadAnnouncements() {
+      try {
+        const data = await getPublicAnnouncements();
+        if (!active) return;
+        setAnnouncements(
+          data
+            .filter((announcement) => announcement.active)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        );
+      } catch (error) {
+        console.error("Failed to load announcements:", error);
+      }
+    }
+
+    void loadAnnouncements();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (megaMenuCloseTimerRef.current) {
         clearTimeout(megaMenuCloseTimerRef.current);
@@ -211,10 +248,12 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
   const { user, logout } = useAuth();
 
   const cartOpen = openMenu === "cart";
+  const notificationsOpen = openMenu === "notifications";
   const profileOpen = openMenu === "profile";
   const megaMenuOpen = openMenu === "men" || openMenu === "women";
   const useSolidHeader = megaMenuOpen || !onHero;
   const activeMenu = openMenu === "men" ? megaMenus.men : openMenu === "women" ? megaMenus.women : null;
+  const latestAnnouncements = announcements.slice(0, 3);
 
   const headerClass = megaMenuOpen
     ? "bg-white"
@@ -473,12 +512,92 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
                 )}
               </div>
 
+              <div ref={notificationsRef} className="relative">
+                <button
+                  type="button"
+                  aria-label="Notifications"
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition ${solidIconBtnClass}`}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    router.push("/notifications");
+                  }}
+                  onMouseEnter={() => setOpenMenu("notifications")}
+                >
+                  <Bell size={18} />
+                  {hydrated && announcements.length > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] text-white">
+                      {announcements.length > 9 ? "9+" : announcements.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div
+                    className="absolute right-0 mt-3 w-[340px] rounded-3xl border border-neutral-200 bg-white p-4 shadow-lg"
+                    onMouseLeave={() => setOpenMenu(null)}
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-neutral-900">Notifications</div>
+                        <div className="mt-0.5 text-xs text-neutral-500">Latest store updates</div>
+                      </div>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-neutral-950 text-white">
+                        <Bell size={16} />
+                      </div>
+                    </div>
+
+                    {latestAnnouncements.length === 0 ? (
+                      <div className="rounded-2xl bg-neutral-50 px-4 py-6 text-center text-sm text-neutral-500">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {latestAnnouncements.map((announcement) => (
+                          <div
+                            key={announcement.id}
+                            className="flex gap-3 rounded-2xl border border-neutral-100 bg-neutral-50 px-3 py-3"
+                          >
+                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-neutral-700 shadow-sm">
+                              <Megaphone size={14} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-neutral-400">
+                                {formatAnnouncementDate(announcement.createdAt)}
+                              </div>
+                              <p className="mt-1 line-clamp-2 text-sm leading-5 text-neutral-800">
+                                {announcement.message}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <Link
+                      href="/notifications"
+                      className="mt-3 flex w-full items-center justify-center rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
+                      onClick={() => setOpenMenu(null)}
+                    >
+                      View more
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               <div ref={profileRef} className="relative">
                 <button
                   type="button"
                   aria-label="Account"
                   className={`flex h-10 w-10 items-center justify-center rounded-full transition ${solidIconBtnClass}`}
-                  onClick={() => setOpenMenu((menu) => (menu === "profile" ? null : "profile"))}
+                  onClick={() => {
+                    if (user) {
+                      setOpenMenu(null);
+                      router.push("/profile");
+                      return;
+                    }
+
+                    setOpenMenu((menu) => (menu === "profile" ? null : "profile"));
+                  }}
                   onMouseEnter={() => setOpenMenu("profile")}
                 >
                   <User size={18} />
@@ -491,6 +610,14 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
                   >
                     {user ? (
                       <>
+                        <Link
+                          href="/profile"
+                          className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-sm hover:bg-neutral-50"
+                          onClick={() => setOpenMenu(null)}
+                        >
+                          <User size={16} />
+                          Profile
+                        </Link>
                         <Link
                           href="/orders"
                           className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-sm hover:bg-neutral-50"

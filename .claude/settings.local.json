@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -L -s \"https://stitch.withgoogle.com/api/projects/15412693179270586339/screens/876740dd67e7406cab57151962105fdc\")"
+    ]
+  }
+}

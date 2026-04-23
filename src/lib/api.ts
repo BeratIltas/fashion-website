@@ -2,16 +2,51 @@ const BASE_URL = "https://ecommerce-backend-production-628e.up.railway.app";
 
 // ─── Auth Types ─────────────────────────────────────────────────────────────────
 
+export type UserRole = "USER" | "ADMIN" | "SELLER";
+
 export type AuthUser = {
     id: number;
     email: string;
     firstName: string;
     lastName: string;
     token: string;
+    role?: UserRole;
     authProvider?: string;
     identityProvider?: string;
     firebaseUid?: string;
     avatarUrl?: string;
+};
+
+export type UserProfile = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    phone: string;
+    address: string;
+    city: string;
+    country: string;
+    photoURL: string;
+};
+
+export type PublicAnnouncement = {
+    id: number;
+    message: string;
+    createdAt: string;
+    active: boolean;
+};
+
+export type ContactMessageRequest = {
+    fullName: string;
+    email: string;
+    subject: string;
+    message: string;
+};
+
+export type ContactMessageResponse = ContactMessageRequest & {
+    id: number;
+    createdAt: string;
+    read: boolean;
 };
 
 // ─── Product Types ──────────────────────────────────────────────────────────────
@@ -277,6 +312,34 @@ export async function getProductReviews(asin: string): Promise<ProductReview[]> 
     return res.json();
 }
 
+export async function getPublicAnnouncements(): Promise<PublicAnnouncement[]> {
+    const res = await fetch(`${BASE_URL}/api/public/announcements`, {
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch announcements");
+    }
+
+    return res.json();
+}
+
+export async function sendContactMessage(input: ContactMessageRequest): Promise<ContactMessageResponse> {
+    const res = await fetch(`${BASE_URL}/api/contact`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+    });
+
+    if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, "Failed to send message"));
+    }
+
+    return res.json();
+}
+
 // ─── Auth API ───────────────────────────────────────────────────────────────────
 
 async function readApiErrorMessage(res: Response, fallbackMessage: string): Promise<string> {
@@ -323,6 +386,58 @@ export async function login(input: AuthRequest): Promise<AuthUser> {
         throw new Error(await readApiErrorMessage(res, "Authentication failed"));
     }
     return res.json();
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+    const res = await fetch(`${BASE_URL}/api/users/profile`, {
+        cache: "no-store",
+        headers: {
+            ...authHeaders(),
+        },
+    });
+
+    if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, "Failed to fetch profile"));
+    }
+
+    return res.json();
+}
+
+export async function updateUserProfile(profile: UserProfile): Promise<UserProfile> {
+    const res = await fetch(`${BASE_URL}/api/users/profile`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(profile),
+    });
+
+    if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, "Failed to update profile"));
+    }
+
+    return res.json();
+}
+
+export async function uploadProfileImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${BASE_URL}/api/users/profile-image`, {
+        method: "POST",
+        headers: {
+            ...authHeaders(),
+        },
+        body: formData,
+    });
+
+    if (!res.ok) {
+        throw new Error(await readApiErrorMessage(res, "Failed to upload profile image"));
+    }
+
+    const uploadedUrl = (await res.text()).trim().replace(/^"|"$/g, "");
+    return uploadedUrl.startsWith("/") ? `${BASE_URL}${uploadedUrl}` : uploadedUrl;
 }
 
 // ─── Order API ──────────────────────────────────────────────────────────────────

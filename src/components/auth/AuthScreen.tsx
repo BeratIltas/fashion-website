@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import type { AuthUser, UserRole } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
@@ -189,10 +190,16 @@ export default function AuthScreen({ mode }: { mode: AuthMode }) {
     ? redirect === "/" ? "/register" : `/register?redirect=${encodeURIComponent(redirect)}`
     : redirect === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`;
 
-  const completeAuth = async (successState: AuthSuccessState) => {
+  function getRedirectByRole(role?: UserRole) {
+    if (role === "SELLER") return "/dashboard/seller";
+    if (role === "ADMIN") return "/dashboard/admin";
+    return redirect;
+  }
+
+  const completeAuth = async (successState: AuthSuccessState, authUser?: AuthUser) => {
     setAuthSuccessState(successState);
     await new Promise((resolve) => window.setTimeout(resolve, 1400));
-    router.push(redirect);
+    router.push(getRedirectByRole(authUser?.role));
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -207,11 +214,11 @@ export default function AuthScreen({ mode }: { mode: AuthMode }) {
 
     try {
       if (isLogin) {
-        await loginWithEmail({ email, password });
-        await completeAuth({ title: "Welcome back", message: "Signed in successfully. Taking you back now." });
+        const authUser = await loginWithEmail({ email, password });
+        await completeAuth({ title: "Welcome back", message: "Signed in successfully. Taking you back now." }, authUser);
       } else {
-        await registerWithEmail({ email, password, firstName, lastName });
-        await completeAuth({ title: "Account created", message: "Everything looks great. Taking you to the store." });
+        const authUser = await registerWithEmail({ email, password, firstName, lastName });
+        await completeAuth({ title: "Account created", message: "Everything looks great. Taking you to the store." }, authUser);
       }
     } catch (authError) {
       setError(getReadableError(authError, isLogin ? "Sign in failed." : "Registration failed."));
@@ -222,8 +229,8 @@ export default function AuthScreen({ mode }: { mode: AuthMode }) {
     setError(null);
     setFeedbackSuccess(null);
     try {
-      await loginWithGoogle();
-      await completeAuth({ title: "Signed in", message: "Google sign-in complete. Taking you back now." });
+      const authUser = await loginWithGoogle();
+      await completeAuth({ title: "Signed in", message: "Google sign-in complete. Taking you back now." }, authUser);
     } catch (authError) {
       setError(getReadableError(authError, "Google sign-in could not be started."));
     }

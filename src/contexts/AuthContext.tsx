@@ -30,15 +30,16 @@ type AuthContextValue = {
   loading: boolean;
   initialized: boolean;
   busyAction: AuthAction | null;
-  loginWithEmail: (input: { email: string; password: string }) => Promise<void>;
+  loginWithEmail: (input: { email: string; password: string }) => Promise<AuthUser>;
   registerWithEmail: (input: {
     email: string;
     password: string;
     firstName: string;
     lastName: string;
-  }) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  }) => Promise<AuthUser>;
+  loginWithGoogle: () => Promise<AuthUser>;
   sendPasswordReset: (email: string) => Promise<string>;
+  updateSessionUser: (updates: Partial<AuthUser>) => void;
   logout: () => Promise<void>;
 };
 
@@ -190,8 +191,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSessionUser(null);
   }, [setSessionUser]);
 
+  const updateSessionUser = useCallback(
+    (updates: Partial<AuthUser>) => {
+      const currentUser = userRef.current;
+      if (!currentUser) return;
+
+      setSessionUser({
+        ...currentUser,
+        ...updates,
+      });
+    },
+    [setSessionUser]
+  );
+
   const syncBackendSession = useCallback(
-    async (firebaseUser: FirebaseUser, options: SessionSyncOptions) => {
+    async (firebaseUser: FirebaseUser, options: SessionSyncOptions): Promise<AuthUser> => {
       const email = firebaseUser.email?.trim();
       if (!email) {
         throw new Error("No usable email address was found on the Firebase account.");
@@ -216,7 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isNewUser: options.isNewUser,
       });
 
-      setSessionUser({
+      const sessionUser: AuthUser = {
         ...backendUser,
         email,
         firstName: backendUser.firstName || names.firstName,
@@ -225,7 +239,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         identityProvider,
         firebaseUid: firebaseUser.uid,
         avatarUrl: firebaseUser.photoURL ?? undefined,
-      });
+      };
+
+      setSessionUser(sessionUser);
+      return sessionUser;
     },
     [setSessionUser]
   );
@@ -279,7 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const loginWithEmail = useCallback(
-    async ({ email, password }: { email: string; password: string }) => {
+    async ({ email, password }: { email: string; password: string }): Promise<AuthUser> => {
       setBusyAction("email-login");
       interactiveAuthRef.current = true;
       let signedInUser: FirebaseUser | null = null;
@@ -289,7 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         signedInUser = result.user;
 
-        await syncBackendSession(result.user, {
+        return await syncBackendSession(result.user, {
           authProvider: "EMAIL_LOGIN",
           identityProvider: "password",
           isNewUser: false,
@@ -320,7 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       firstName: string;
       lastName: string;
-    }) => {
+    }): Promise<AuthUser> => {
       setBusyAction("email-register");
       interactiveAuthRef.current = true;
       let createdUser: FirebaseUser | null = null;
@@ -334,7 +351,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           displayName: `${firstName.trim()} ${lastName.trim()}`.trim(),
         });
 
-        await syncBackendSession(result.user, {
+        return await syncBackendSession(result.user, {
           authProvider: "EMAIL_REGISTER",
           identityProvider: "password",
           firstName,
@@ -356,7 +373,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [clearSession, syncBackendSession]
   );
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (): Promise<AuthUser> => {
     setBusyAction("google");
     interactiveAuthRef.current = true;
     let signedInUser: FirebaseUser | null = null;
@@ -367,7 +384,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signedInUser = result.user;
       const isNewUser = getAdditionalUserInfo(result)?.isNewUser ?? false;
 
-      await syncBackendSession(result.user, {
+      return await syncBackendSession(result.user, {
         authProvider: isNewUser ? "EMAIL_REGISTER" : "EMAIL_LOGIN",
         identityProvider: "google.com",
         isNewUser,
@@ -422,6 +439,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         registerWithEmail,
         loginWithGoogle,
         sendPasswordReset,
+        updateSessionUser,
         logout,
       }}
     >

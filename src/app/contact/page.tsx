@@ -1,19 +1,21 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle, Clock3 } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Clock3, LoaderCircle, AlertCircle } from "lucide-react";
 import Container from "@/components/ui/Container";
+import { sendContactMessage } from "@/lib/api";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
     subject: "",
     message: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [highlightPanel, setHighlightPanel] = useState<"info" | "form" | null>(null);
   const infoRef = useRef<HTMLElement | null>(null);
   const formRef = useRef<HTMLElement | null>(null);
@@ -32,20 +34,37 @@ export default function ContactPage() {
     window.setTimeout(() => setHighlightPanel((current) => (current === target ? null : current)), 1400);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+    try {
+      await sendContactMessage({
+        fullName,
+        email: formData.email.trim(),
+        subject: formData.subject,
+        message: formData.message.trim(),
+      });
+
+      setIsSubmitted(true);
       setFormData({
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
         subject: "",
         message: "",
       });
-    }, 3000);
+      window.setTimeout(() => {
+        setIsSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+      setSubmitError("Your message could not be sent. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -86,7 +105,7 @@ export default function ContactPage() {
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-black">
                 <Mail className="text-white" size={24} />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">Instagram.com</h3>
+              <h3 className="mb-2 text-lg font-semibold">help@mirage.com</h3>
               <p className="text-neutral-600">Send us an email</p>
             </div>
 
@@ -217,18 +236,6 @@ export default function ContactPage() {
                     </div>
 
                     <div className="mb-6">
-                      <label className="mb-2 block text-sm font-medium text-neutral-700">Phone number</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+90 555 123 45 67"
-                        className="w-full rounded-xl border border-neutral-200 px-4 py-3 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
-                      />
-                    </div>
-
-                    <div className="mb-6">
                       <label className="mb-2 block text-sm font-medium text-neutral-700">Subject</label>
                       <select
                         name="subject"
@@ -258,12 +265,29 @@ export default function ContactPage() {
                       />
                     </div>
 
+                    {submitError && (
+                      <div className="mb-6 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+                        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                        <span>{submitError}</span>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-black py-4 font-semibold text-white shadow-lg transition hover:bg-neutral-800 hover:shadow-xl"
+                      disabled={isSubmitting}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-black py-4 font-semibold text-white shadow-lg transition hover:bg-neutral-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Send message
-                      <Send size={18} />
+                      {isSubmitting ? (
+                        <>
+                          Sending...
+                          <LoaderCircle size={18} className="animate-spin" />
+                        </>
+                      ) : (
+                        <>
+                          Send message
+                          <Send size={18} />
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>

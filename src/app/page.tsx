@@ -5,6 +5,7 @@ import { filterProducts } from "@/lib/api";
 
 export default async function HomePage() {
   const products = await filterProducts({}, { page: 0, size: 8 });
+  const products2 = await filterProducts({}, { page: 4, size: 8 });
 
   const orbitItems = [
     { id: "1", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
@@ -21,7 +22,7 @@ export default async function HomePage() {
       <Hero />
       <ProductGrid title="New Arrivals" products={products} />
       <OrbitGallery items={orbitItems} />
-      <ProductGrid title="Best Sellers" products={products} />
+      <ProductGrid title="Best Sellers" products={products2} />
     </>
   );
 }
