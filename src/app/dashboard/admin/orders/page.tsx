@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { getAdminOrders, type AdminOrder } from "@/lib/adminApi";
 import AdminBell from "@/components/dashboard/AdminBell";
+import AdminUserMenu from "@/components/dashboard/AdminUserMenu";
 import {
   ChevronDown,
   Filter,
   LoaderCircle,
-  Package,
   Search,
   ShoppingBag,
   X,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import Image from "next/image";
+import Link from "next/link";
 
 const STATUSES = ["DELIVERED", "SHIPPED", "PROCESSING", "PENDING", "CANCELLED"];
 
@@ -33,8 +34,22 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function parseItemImage(product: AdminOrder["items"][number]["product"]): string {
+  if (product.images && product.images.length > 0) return product.images[0].imageUrl;
+  if (product.allImages) {
+    const raw = typeof product.allImages === "string" ? product.allImages : "";
+    if (raw.startsWith("http")) return raw;
+    if (raw.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(raw.replace(/'/g, '"')) as string[];
+        if (parsed.length > 0) return parsed[0];
+      } catch { /* ignore */ }
+    }
+  }
+  return "/placeholder.png";
+}
+
 export default function AdminOrdersPage() {
-  const { user } = useAuth();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,15 +98,7 @@ export default function AdminOrdersPage() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           <AdminBell />
-          <div className="flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center text-[11px] font-bold text-white">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-semibold text-neutral-900 leading-none">{user?.firstName}</p>
-              <p className="text-[10px] text-neutral-400 leading-none mt-0.5">Administrator</p>
-            </div>
-          </div>
+          <AdminUserMenu />
         </div>
       </header>
 
@@ -136,7 +143,9 @@ export default function AdminOrdersPage() {
             })}
           </div>
 
-          {error && <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">{error}</div>}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">{error}</div>
+          )}
 
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             {loading && (
@@ -145,16 +154,16 @@ export default function AdminOrdersPage() {
               </div>
             )}
             {!loading && (
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="bg-neutral-50 border-b border-neutral-100 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                    <th className="px-6 py-3.5 text-left">Order</th>
+                    <th className="w-24 px-6 py-3.5 text-left">Order</th>
                     <th className="px-6 py-3.5 text-left">Customer</th>
-                    <th className="px-6 py-3.5 text-left">Date</th>
-                    <th className="px-6 py-3.5 text-center">Items</th>
-                    <th className="px-6 py-3.5 text-right">Total</th>
-                    <th className="px-6 py-3.5 text-left">Status</th>
-                    <th className="px-6 py-3.5" />
+                    <th className="w-32 px-6 py-3.5 text-left">Date</th>
+                    <th className="w-20 px-6 py-3.5 text-center">Items</th>
+                    <th className="w-28 px-6 py-3.5 text-right">Total</th>
+                    <th className="w-32 px-6 py-3.5 text-left">Status</th>
+                    <th className="w-10 px-6 py-3.5" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-50">
@@ -170,9 +179,8 @@ export default function AdminOrdersPage() {
                     const c = cfg(o.status);
                     const isOpen = expanded === o.id;
                     return (
-                      <>
+                      <Fragment key={o.id}>
                         <tr
-                          key={o.id}
                           onClick={() => setExpanded(isOpen ? null : o.id)}
                           className="cursor-pointer hover:bg-orange-50/30 transition-colors group"
                         >
@@ -208,26 +216,42 @@ export default function AdminOrdersPage() {
                           </td>
                         </tr>
                         {isOpen && (
-                          <tr key={`${o.id}-detail`}>
+                          <tr>
                             <td colSpan={7} className="bg-neutral-50 border-b border-neutral-100 px-6 py-4">
                               <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Order Items</p>
                               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                {o.items.map((item) => (
-                                  <div key={item.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3">
-                                    <div className="h-9 w-9 shrink-0 rounded-lg bg-neutral-100 flex items-center justify-center">
-                                      <Package size={13} className="text-neutral-400" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="truncate text-xs font-semibold text-neutral-900">{item.product.title}</p>
-                                      <p className="text-[10px] text-neutral-400">Qty {item.quantity} · {fmt(item.priceAtPurchase)}</p>
-                                    </div>
-                                  </div>
-                                ))}
+                                {o.items.map((item) => {
+                                  const imgSrc = parseItemImage(item.product);
+                                  return (
+                                    <Link
+                                      key={item.id}
+                                      href={`/dashboard/admin/products/${item.product.asin}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 hover:border-orange-300 hover:bg-orange-50/30 transition-colors"
+                                    >
+                                      <div className="relative h-10 w-10 shrink-0 rounded-lg bg-neutral-100 overflow-hidden">
+                                        <Image
+                                          src={imgSrc}
+                                          alt={item.product.title}
+                                          fill
+                                          className="object-cover"
+                                          sizes="40px"
+                                          unoptimized={imgSrc.includes("amazon.com")}
+                                          onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.png"; }}
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="truncate text-xs font-semibold text-neutral-900">{item.product.title}</p>
+                                        <p className="text-[10px] text-neutral-400">Qty {item.quantity} · {fmt(item.priceAtPurchase)}</p>
+                                      </div>
+                                    </Link>
+                                  );
+                                })}
                               </div>
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>

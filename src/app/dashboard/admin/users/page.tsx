@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { getAdminUsers, type AdminUser } from "@/lib/adminApi";
 import AdminBell from "@/components/dashboard/AdminBell";
+import AdminUserMenu from "@/components/dashboard/AdminUserMenu";
 import {
+  ChevronDown,
   LoaderCircle,
+  MapPin,
+  Phone,
   Search,
   Shield,
   ShoppingBag,
@@ -31,6 +35,24 @@ const ROLE_CARDS = [
   { role: "ADMIN",  label: "Admins",    icon: Shield,      accent: "bg-orange-50",    text: "text-orange-600"  },
 ];
 
+function UserAvatar({ user, size = "md" }: { user: AdminUser; size?: "sm" | "md" | "lg" }) {
+  const sizeClass = size === "lg" ? "h-14 w-14 text-base" : size === "sm" ? "h-7 w-7 text-[10px]" : "h-8 w-8 text-[11px]";
+  if (user.photoURL) {
+    return (
+      <img
+        src={user.photoURL}
+        alt=""
+        className={`${sizeClass} shrink-0 rounded-full object-cover`}
+      />
+    );
+  }
+  return (
+    <div className={`${sizeClass} shrink-0 rounded-full bg-orange-50 flex items-center justify-center font-semibold text-orange-600`}>
+      {user.firstName?.[0]}{user.lastName?.[0]}
+    </div>
+  );
+}
+
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -38,6 +60,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [expanded, setExpanded] = useState<number | null>(null);
 
   useEffect(() => {
     getAdminUsers()
@@ -73,15 +96,7 @@ export default function AdminUsersPage() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           <AdminBell />
-          <div className="flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center text-[11px] font-bold text-white">
-              {currentUser?.firstName?.[0]}{currentUser?.lastName?.[0]}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-semibold text-neutral-900 leading-none">{currentUser?.firstName}</p>
-              <p className="text-[10px] text-neutral-400 leading-none mt-0.5">Administrator</p>
-            </div>
-          </div>
+          <AdminUserMenu />
         </div>
       </header>
 
@@ -130,12 +145,13 @@ export default function AdminUsersPage() {
                     <th className="px-6 py-3.5 text-left">Email</th>
                     <th className="px-6 py-3.5 text-left">Role</th>
                     <th className="px-6 py-3.5 text-left">Auth Provider</th>
+                    <th className="px-6 py-3.5 w-10" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-50">
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
+                      <td colSpan={5} className="px-6 py-12 text-center">
                         <Users size={24} className="mx-auto mb-2 text-neutral-300" />
                         <p className="text-sm text-neutral-400">No users found.</p>
                       </td>
@@ -143,32 +159,75 @@ export default function AdminUsersPage() {
                   )}
                   {filtered.map((u) => {
                     const roleKey = u.role?.toUpperCase() ?? "USER";
+                    const isOpen = expanded === u.id;
                     return (
-                      <tr key={u.id} className="hover:bg-orange-50/20 transition-colors">
-                        <td className="px-6 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 shrink-0 rounded-full bg-orange-50 flex items-center justify-center text-[11px] font-semibold text-orange-600">
-                              {u.firstName?.[0]}{u.lastName?.[0]}
+                      <Fragment key={u.id}>
+                        <tr
+                          onClick={() => setExpanded(isOpen ? null : u.id)}
+                          className="hover:bg-orange-50/20 transition-colors cursor-pointer group"
+                        >
+                          <td className="px-6 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <UserAvatar user={u} size="md" />
+                              <div>
+                                <p className="text-xs font-medium text-neutral-900">{u.firstName} {u.lastName}</p>
+                                <p className="text-[10px] text-neutral-400">ID: {u.id}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs font-medium text-neutral-900">{u.firstName} {u.lastName}</p>
-                              <p className="text-[10px] text-neutral-400">ID: {u.id}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3.5 text-xs text-neutral-600">{u.email}</td>
-                        <td className="px-6 py-3.5">
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ${ROLE_STYLES[roleKey] ?? "bg-neutral-100 text-neutral-600"}`}>
-                            {ROLE_ICONS[roleKey]}
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-3.5">
-                          <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-medium text-neutral-600 border border-neutral-200">
-                            {u.authProvider || "—"}
-                          </span>
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="px-6 py-3.5 text-xs text-neutral-600">{u.email}</td>
+                          <td className="px-6 py-3.5">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ${ROLE_STYLES[roleKey] ?? "bg-neutral-100 text-neutral-600"}`}>
+                              {ROLE_ICONS[roleKey]}
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-medium text-neutral-600 border border-neutral-200">
+                              {u.authProvider || "—"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <ChevronDown
+                              size={14}
+                              className={`text-neutral-300 group-hover:text-neutral-500 transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
+                            />
+                          </td>
+                        </tr>
+                        {isOpen && (
+                          <tr key={`${u.id}-detail`}>
+                            <td colSpan={5} className="bg-orange-50/30 border-b border-neutral-100 px-6 py-5">
+                              <div className="flex items-start gap-5">
+                                <UserAvatar user={u} size="lg" />
+                                <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
+                                  <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">Full Name</p>
+                                    <p className="text-sm font-medium text-neutral-900">{u.firstName} {u.lastName}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+                                      <Phone size={9} /> Phone
+                                    </p>
+                                    <p className="text-sm text-neutral-700">{u.phone || <span className="text-neutral-300">—</span>}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+                                      <MapPin size={9} /> City
+                                    </p>
+                                    <p className="text-sm text-neutral-700">{u.city || <span className="text-neutral-300">—</span>}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+                                      <MapPin size={9} /> Country
+                                    </p>
+                                    <p className="text-sm text-neutral-700">{u.country || <span className="text-neutral-300">—</span>}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>

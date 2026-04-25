@@ -105,6 +105,10 @@ export default function ProfilePage() {
           email: remoteProfile.email || fallbackProfile.email,
           role: remoteProfile.role || fallbackProfile.role,
           photoURL: remoteProfile.photoURL || fallbackProfile.photoURL,
+          phone: remoteProfile.phone ?? "",
+          address: remoteProfile.address ?? "",
+          city: remoteProfile.city ?? "",
+          country: remoteProfile.country ?? "",
         });
       } catch (error) {
         console.error(error);
@@ -161,15 +165,15 @@ export default function ProfilePage() {
 
     const nextProfile: UserProfile = {
       ...profile,
-      firstName: profile.firstName.trim(),
-      lastName: profile.lastName.trim(),
-      email: profile.email.trim(),
+      firstName: (profile.firstName ?? "").trim(),
+      lastName: (profile.lastName ?? "").trim(),
+      email: (profile.email ?? "").trim(),
       role: profile.role || user?.role || "USER",
-      phone: profile.phone.trim(),
-      address: profile.address.trim(),
-      city: profile.city.trim(),
-      country: profile.country.trim(),
-      photoURL: cleanPhotoUrl(profile.photoURL),
+      phone: (profile.phone ?? "").trim(),
+      address: (profile.address ?? "").trim(),
+      city: (profile.city ?? "").trim(),
+      country: (profile.country ?? "").trim(),
+      photoURL: cleanPhotoUrl(profile.photoURL ?? ""),
     };
 
     try {
@@ -305,9 +309,9 @@ export default function ProfilePage() {
                   <ProfileInput label="First name" value={profile.firstName} onChange={(value) => setField("firstName", value)} icon={<UserRound size={15} />} />
                   <ProfileInput label="Last name" value={profile.lastName} onChange={(value) => setField("lastName", value)} icon={<UserRound size={15} />} />
                   <ProfileInput label="Email" value={profile.email} type="email" onChange={(value) => setField("email", value)} icon={<Mail size={15} />} disabled />
-                  <ProfileInput label="Phone" value={profile.phone} onChange={(value) => setField("phone", value)} icon={<Phone size={15} />} placeholder="+90 555 000 00 00" />
-                  <ProfileInput label="City" value={profile.city} onChange={(value) => setField("city", value)} icon={<MapPin size={15} />} placeholder="Beykoz" />
-                  <ProfileInput label="Country" value={profile.country} onChange={(value) => setField("country", value)} icon={<MapPin size={15} />} placeholder="Turkey" />
+                  <ProfileInput label="Phone" value={profile.phone ?? ""} onChange={(value) => setField("phone", value)} icon={<Phone size={15} />} placeholder="+90 555 000 00 00" />
+                  <ProfileInput label="City" value={profile.city ?? ""} onChange={(value) => setField("city", value)} icon={<MapPin size={15} />} placeholder="Beykoz" />
+                  <ProfileInput label="Country" value={profile.country ?? ""} onChange={(value) => setField("country", value)} icon={<MapPin size={15} />} placeholder="Turkey" />
                 </div>
 
                 <div className="mt-4">
@@ -315,7 +319,7 @@ export default function ProfilePage() {
                     Address
                   </label>
                   <textarea
-                    value={profile.address}
+                    value={profile.address ?? ""}
                     onChange={(event) => setField("address", event.target.value)}
                     rows={4}
                     className="mt-2 w-full resize-none rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition focus:border-neutral-900 focus:bg-white"
@@ -326,7 +330,7 @@ export default function ProfilePage() {
                 <div className="mt-4">
                   <ProfileInput
                     label="Photo URL"
-                    value={profile.photoURL}
+                    value={profile.photoURL ?? ""}
                     onChange={(value) => setField("photoURL", value)}
                     icon={<Camera size={15} />}
                     placeholder="https://..."

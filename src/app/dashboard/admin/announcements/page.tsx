@@ -8,6 +8,7 @@ import {
   type Announcement,
 } from "@/lib/adminApi";
 import AdminBell from "@/components/dashboard/AdminBell";
+import AdminUserMenu from "@/components/dashboard/AdminUserMenu";
 import {
   CheckCircle2,
   Clock,
@@ -86,15 +87,7 @@ export default function AdminAnnouncementsPage() {
         <h1 className="text-sm font-semibold text-neutral-800">Announcements</h1>
         <div className="ml-auto flex items-center gap-3">
           <AdminBell />
-          <div className="flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center text-[11px] font-bold text-white">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-semibold text-neutral-900 leading-none">{user?.firstName}</p>
-              <p className="text-[10px] text-neutral-400 leading-none mt-0.5">Administrator</p>
-            </div>
-          </div>
+          <AdminUserMenu />
         </div>
       </header>
 

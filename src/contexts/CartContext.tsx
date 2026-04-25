@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
     Cart,
     addToCart as apiAdd,
@@ -8,6 +8,7 @@ import {
     removeFromCart as apiRemove,
     updateCartItem as apiUpdate,
 } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 type CartContextValue = {
     cart: Cart | null;
@@ -23,6 +24,8 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [cart, setCart] = useState<Cart | null>(null);
     const [loading, setLoading] = useState(false);
+    const { user } = useAuth();
+    const prevUserRef = useRef(user);
 
     const refresh = useCallback(async () => {
         try {
@@ -34,8 +37,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     useEffect(() => {
-        refresh();
-    }, [refresh]);
+        const prev = prevUserRef.current;
+        prevUserRef.current = user;
+        if (user) {
+            void refresh();
+        } else if (prev !== null) {
+            setCart(null);
+        }
+    }, [user, refresh]);
 
     const addItem = useCallback(async (asin: string, quantity = 1) => {
         setLoading(true);

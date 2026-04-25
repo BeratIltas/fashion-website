@@ -13,7 +13,6 @@ import {
   Package,
   ShoppingBag,
   Shield,
-  Tag,
   Users,
 } from "lucide-react";
 
@@ -22,7 +21,6 @@ const NAV = [
   { href: "/dashboard/admin/orders", icon: ShoppingBag, label: "Orders" },
   { href: "/dashboard/admin/products", icon: Package, label: "Products" },
   { href: "/dashboard/admin/users", icon: Users, label: "Users" },
-  { href: "/dashboard/admin/discounts", icon: Tag, label: "Discounts" },
   { href: "/dashboard/admin/announcements", icon: Megaphone, label: "Announcements" },
   { href: "/dashboard/admin/contact", icon: Mail, label: "Contact" },
 ];
@@ -34,7 +32,7 @@ export default function AdminSidebar({ collapsed, onToggle }: { collapsed: boole
 
   const handleLogout = async () => {
     await logout();
-    router.push("/");
+    router.push("/login");
   };
 
   const isActive = (href: string) =>

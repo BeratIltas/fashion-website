@@ -122,6 +122,10 @@ export type AdminUser = {
   email: string;
   role: string;
   authProvider: string;
+  photoURL?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
 };
 
 export type ContactMessage = {
@@ -255,7 +259,6 @@ export type ProductDetailDto = {
   aboutItem: string;
   availability: string;
   breadcrumbs: string;
-  customerReviewSummary: string;
   deliveryDate: string;
   fastestDeliveryDate: string;
   sellerName: string;
@@ -285,6 +288,24 @@ export async function getProductReviews(asin: string): Promise<ReviewDto[]> {
 
 // ─── Seller Product Management ───────────────────────────────────────────────
 
+export async function getSellerProducts(): Promise<AdminProduct[]> {
+  const PAGE_SIZE = 100;
+  const all: AdminProduct[] = [];
+  let page = 0;
+  while (true) {
+    const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
+    const res = await fetch(`${BASE_URL}/api/seller/products?${params}`, {
+      cache: "no-store",
+      headers: adminHeaders(),
+    });
+    const data = await handleResponse<AdminProduct[]>(res, "Failed to load products");
+    all.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
+  return all;
+}
+
 export type ProductUpdateDto = {
   title?: string;
   aboutItem?: string;
@@ -297,18 +318,53 @@ export type ProductUpdateDto = {
 };
 
 export async function updateProduct(asin: string, data: ProductUpdateDto): Promise<void> {
-  const res = await fetch(`${BASE_URL}/api/seller/products/${asin}`, {
+  const token = getAdminToken();
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/products/${asin}`, {
     method: "PUT",
-    headers: adminHeaders(true),
+    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update product");
+  if (!res.ok) {
+    let msg = "Failed to update product";
+    try { const d = await res.json() as { message?: string }; if (d.message) msg = d.message; } catch { /* */ }
+    throw new Error(msg);
+  }
+}
+
+export type ProductCreateDto = {
+  title: string;
+  brandName?: string;
+  priceValue: string;
+  aboutItem?: string;
+  category?: string;
+  availability?: string;
+  stock?: number;
+  deliveryDate?: string;
+  fastestDeliveryDate?: string;
+  imageUrls?: string[];
+};
+
+export async function createProduct(data: ProductCreateDto): Promise<AdminProduct> {
+  const token = getAdminToken();
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/products`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+  return handleResponse<AdminProduct>(res, "Failed to create product");
 }
 
 export async function deleteProduct(asin: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/api/seller/products/${asin}`, {
+  const token = getAdminToken();
+  const headers: HeadersInit = {};
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/products/${asin}`, {
     method: "DELETE",
-    headers: adminHeaders(),
+    headers,
   });
   if (!res.ok) throw new Error("Failed to delete product");
 }
@@ -362,6 +418,57 @@ export async function getSellerDashboard(): Promise<SellerDashboard> {
   return handleResponse<SellerDashboard>(res, "Failed to fetch seller dashboard");
 }
 
+// ─── Seller Statistics & Orders ──────────────────────────────────────────────
+
+export type SellerStatistics = {
+  totalSalesCount: number;
+  totalRevenue: number;
+  pendingOrderCount: number;
+  shippedOrderCount: number;
+  deliveredOrderCount: number;
+  cancelledOrderCount: number;
+  activeProductsCount: number;
+  dailyRevenue?: { date: string; revenue: number }[];
+  categoryDistribution?: { category: string; count: number }[];
+};
+
+export type SellerOrder = {
+  id: number;
+  user: AdminOrderUser;
+  orderDate: string;
+  totalAmount: number;
+  status: string;
+  items: AdminOrderItem[];
+};
+
+export async function getSellerStatistics(): Promise<SellerStatistics> {
+  const res = await fetch(`${BASE_URL}/api/seller/statistics`, {
+    cache: "no-store",
+    headers: adminHeaders(),
+  });
+  return handleResponse<SellerStatistics>(res, "Failed to fetch seller statistics");
+}
+
+export async function getSellerOrders(): Promise<SellerOrder[]> {
+  const res = await fetch(`${BASE_URL}/api/seller/orders`, {
+    cache: "no-store",
+    headers: adminHeaders(),
+  });
+  return handleResponse<SellerOrder[]>(res, "Failed to fetch seller orders");
+}
+
+export async function updateSellerOrderStatus(orderId: number, status: string): Promise<SellerOrder> {
+  const token = getAdminToken();
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/orders/${orderId}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ status }),
+  });
+  return handleResponse<SellerOrder>(res, "Failed to update order status");
+}
+
 // ─── Discounts ────────────────────────────────────────────────────────────────
 
 export async function generateCoupon(): Promise<string> {
@@ -375,6 +482,24 @@ export async function generateCoupon(): Promise<string> {
   if (!res.ok) throw new Error("Failed to generate coupon");
   const data = await res.json() as { code: string };
   return data.code;
+}
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const token = getAdminToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Failed to upload image");
+  const data = await res.json() as { url?: string };
+  const url = data.url ?? "";
+  if (!url) throw new Error("No image URL in response");
+  return url;
 }
 
 export async function verifyCoupon(code: string): Promise<number> {

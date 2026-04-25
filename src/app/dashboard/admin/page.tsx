@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import { getDashboardStats, type DashboardStats } from "@/lib/adminApi";
 import AdminBell from "@/components/dashboard/AdminBell";
+import AdminUserMenu from "@/components/dashboard/AdminUserMenu";
 import {
-  AlertTriangle,
   ArrowUpRight,
   Box,
   CreditCard,
   LoaderCircle,
-  Package,
   Search,
   ShoppingBag,
   Users,
@@ -82,15 +81,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           <AdminBell />
-          <div className="flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center text-[11px] font-bold text-white">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-semibold text-neutral-900 leading-none">{user?.firstName}</p>
-              <p className="text-[10px] text-neutral-400 leading-none mt-0.5">Administrator</p>
-            </div>
-          </div>
+          <AdminUserMenu />
         </div>
       </header>
 
@@ -197,90 +188,54 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Recent orders + Low stock */}
-              <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-                <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
-                    <div>
-                      <h2 className="font-semibold text-neutral-900">Recent Orders</h2>
-                      <p className="text-[11px] text-neutral-400 mt-0.5">{stats.recentOrders.length} latest</p>
-                    </div>
-                    <Link href="/dashboard/admin/orders" className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800 transition-colors">
-                      View all <ArrowUpRight size={13} />
-                    </Link>
+              {/* Recent Orders */}
+              <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+                  <div>
+                    <h2 className="font-semibold text-neutral-900">Recent Orders</h2>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">{stats.recentOrders.length} latest</p>
                   </div>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-neutral-50 border-b border-neutral-100 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                        <th className="px-6 py-3 text-left">Order</th>
-                        <th className="px-6 py-3 text-left">Customer</th>
-                        <th className="px-6 py-3 text-left">Date</th>
-                        <th className="px-6 py-3 text-right">Amount</th>
-                        <th className="px-6 py-3 text-left">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-50">
-                      {stats.recentOrders.map((o) => (
-                        <tr key={o.orderId} className="hover:bg-orange-50/30 transition-colors">
-                          <td className="px-6 py-3.5 font-mono text-xs font-semibold text-neutral-500">#{o.orderId}</td>
-                          <td className="px-6 py-3.5">
-                            <div className="flex items-center gap-2.5">
-                              <div className="h-7 w-7 shrink-0 rounded-full bg-orange-50 flex items-center justify-center text-[10px] font-bold text-orange-600">
-                                {o.customerName?.[0]}
-                              </div>
-                              <span className="text-xs font-medium text-neutral-900">{o.customerName}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-3.5 text-xs text-neutral-400">
-                            {new Date(o.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </td>
-                          <td className="px-6 py-3.5 text-right text-xs font-bold text-neutral-900">{fmt(o.amount)}</td>
-                          <td className="px-6 py-3.5">
-                            <span className="rounded px-2 py-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600">
-                              {o.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <Link href="/dashboard/admin/orders" className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800 transition-colors">
+                    View all <ArrowUpRight size={13} />
+                  </Link>
                 </div>
-
-                <div className="bg-white rounded-xl border border-neutral-200 p-6">
-                  <div className="mb-5 flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                      <AlertTriangle size={15} className="text-amber-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-neutral-900">Low Stock</h2>
-                      <p className="text-[11px] text-neutral-400">{stats.lowStockProducts.length} products</p>
-                    </div>
-                  </div>
-                  {stats.lowStockProducts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-neutral-300">
-                      <Package size={24} className="mb-2" />
-                      <p className="text-xs">All well stocked</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3.5">
-                      {stats.lowStockProducts.map((p) => {
-                        const stockPct = Math.min(Math.round((p.stock / 10) * 100), 100);
-                        return (
-                          <div key={p.asin}>
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="truncate text-xs text-neutral-800 max-w-[180px]">{p.title}</p>
-                              <span className="text-[10px] font-bold text-amber-600 shrink-0">{p.stock}</span>
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-neutral-50 border-b border-neutral-100 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                      <th className="px-6 py-3 text-left">Order</th>
+                      <th className="px-6 py-3 text-left">Customer</th>
+                      <th className="px-6 py-3 text-left">Date</th>
+                      <th className="px-6 py-3 text-right">Amount</th>
+                      <th className="px-6 py-3 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-50">
+                    {stats.recentOrders.map((o) => (
+                      <tr key={o.orderId} className="hover:bg-orange-50/30 transition-colors">
+                        <td className="px-6 py-3.5 font-mono text-xs font-semibold text-neutral-500">#{o.orderId}</td>
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-7 w-7 shrink-0 rounded-full bg-orange-50 flex items-center justify-center text-[10px] font-bold text-orange-600">
+                              {o.customerName?.[0]}
                             </div>
-                            <div className="h-1.5 w-full rounded-full bg-neutral-100">
-                              <div className="h-1.5 rounded-full bg-amber-400" style={{ width: `${stockPct}%` }} />
-                            </div>
+                            <span className="text-xs font-medium text-neutral-900">{o.customerName}</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </td>
+                        <td className="px-6 py-3.5 text-xs text-neutral-400">
+                          {new Date(o.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </td>
+                        <td className="px-6 py-3.5 text-right text-xs font-bold text-neutral-900">{fmt(o.amount)}</td>
+                        <td className="px-6 py-3.5">
+                          <span className="rounded px-2 py-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600">
+                            {o.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+
             </>
           )}
         </div>

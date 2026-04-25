@@ -13,7 +13,7 @@ import {
   type User as FirebaseUser,
 } from "firebase/auth";
 import { auth, ensureAuthPersistence, googleProvider } from "@/lib/firebase";
-import { login as apiLogin, type AuthUser } from "@/lib/api";
+import { login as apiLogin, generateCoupon, type AuthUser } from "@/lib/api";
 
 type AuthAction = "email-login" | "email-register" | "google" | "facebook" | "reset" | "logout";
 
@@ -30,6 +30,8 @@ type AuthContextValue = {
   loading: boolean;
   initialized: boolean;
   busyAction: AuthAction | null;
+  pendingCoupon: string | null;
+  clearPendingCoupon: () => void;
   loginWithEmail: (input: { email: string; password: string }) => Promise<AuthUser>;
   registerWithEmail: (input: {
     email: string;
@@ -178,8 +180,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [busyAction, setBusyAction] = useState<AuthAction | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
   const userRef = useRef<AuthUser | null>(null);
   const interactiveAuthRef = useRef(false);
+
+  const clearPendingCoupon = useCallback(() => setPendingCoupon(null), []);
+
+  const maybeTriggerCoupon = useCallback(async (u: AuthUser) => {
+    if (u.role && u.role !== "USER") return;
+    try {
+      const res = await generateCoupon();
+      if (res.status === "success" && res.code) setPendingCoupon(res.code);
+    } catch {
+      // silent — coupon failure must never block login
+    }
+  }, []);
 
   const setSessionUser = useCallback((nextUser: AuthUser | null) => {
     userRef.current = nextUser;
@@ -306,11 +321,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         signedInUser = result.user;
 
-        return await syncBackendSession(result.user, {
+        const sessionUser = await syncBackendSession(result.user, {
           authProvider: "EMAIL_LOGIN",
           identityProvider: "password",
           isNewUser: false,
         });
+        maybeTriggerCoupon(sessionUser);
+        return sessionUser;
       } catch (error) {
         if (signedInUser) {
           await firebaseSignOut(auth).catch(() => undefined);
@@ -323,7 +340,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setInitialized(true);
       }
     },
-    [clearSession, syncBackendSession]
+    [clearSession, syncBackendSession, maybeTriggerCoupon]
   );
 
   const registerWithEmail = useCallback(
@@ -351,13 +368,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           displayName: `${firstName.trim()} ${lastName.trim()}`.trim(),
         });
 
-        return await syncBackendSession(result.user, {
+        const sessionUser = await syncBackendSession(result.user, {
           authProvider: "EMAIL_REGISTER",
           identityProvider: "password",
           firstName,
           lastName,
           isNewUser: true,
         });
+        maybeTriggerCoupon(sessionUser);
+        return sessionUser;
       } catch (error) {
         if (createdUser) {
           await firebaseSignOut(auth).catch(() => undefined);
@@ -370,7 +389,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setInitialized(true);
       }
     },
-    [clearSession, syncBackendSession]
+    [clearSession, syncBackendSession, maybeTriggerCoupon]
   );
 
   const loginWithGoogle = useCallback(async (): Promise<AuthUser> => {
@@ -384,11 +403,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signedInUser = result.user;
       const isNewUser = getAdditionalUserInfo(result)?.isNewUser ?? false;
 
-      return await syncBackendSession(result.user, {
+      const sessionUser = await syncBackendSession(result.user, {
         authProvider: isNewUser ? "EMAIL_REGISTER" : "EMAIL_LOGIN",
         identityProvider: "google.com",
         isNewUser,
       });
+      maybeTriggerCoupon(sessionUser);
+      return sessionUser;
     } catch (error) {
       if (signedInUser) {
         await firebaseSignOut(auth).catch(() => undefined);
@@ -400,14 +421,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setBusyAction(null);
       setInitialized(true);
     }
-  }, [clearSession, syncBackendSession]);
+  }, [clearSession, syncBackendSession, maybeTriggerCoupon]);
 
   const sendPasswordReset = useCallback(async (email: string) => {
     setBusyAction("reset");
 
     try {
       await ensureAuthPersistence();
-      await sendPasswordResetEmail(auth, email.trim());
+      await sendPasswordResetEmail(auth, email.trim(), {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true,
+      });
       return "Password reset link sent to your email address.";
     } catch (error) {
       throw new Error(getAuthErrorMessage(error));
@@ -435,6 +459,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: busyAction !== null,
         initialized,
         busyAction,
+        pendingCoupon,
+        clearPendingCoupon,
         loginWithEmail,
         registerWithEmail,
         loginWithGoogle,

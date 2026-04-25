@@ -288,9 +288,6 @@ export default function AdminProductDetailPage() {
                       <RatingBar label="1" value={product.ratingDistribution1star} />
                     </div>
                   </div>
-                  {product.customerReviewSummary && (
-                    <p className="mt-3 text-xs text-neutral-500 italic">"{product.customerReviewSummary}"</p>
-                  )}
                 </div>
 
                 {(product.aboutItem || editMode) && (

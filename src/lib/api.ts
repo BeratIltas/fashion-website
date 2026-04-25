@@ -68,7 +68,6 @@ export type ProductDetail = Product & {
     aboutItem: string;
     availability: string;
     breadcrumbs: string;
-    customerReviewSummary: string;
     deliveryDate: string;
     fastestDeliveryDate: string;
     sellerName: string;
@@ -203,11 +202,14 @@ export type CartItem = {
     id: number;
     product: CartProduct;
     quantity: number;
+    discountedPrice?: number;
 };
 
 export type Cart = {
     id: number;
+    appliedCouponCode?: string;
     items: CartItem[];
+    originalTotalPrice?: number;
     totalPrice: number;
     totalItems: number;
 };
@@ -300,16 +302,70 @@ export type ProductReview = {
     rating: string;
     verifiedPurchase: string;
     reviewMetadata: string;
+    userName?: string;
+    createdByCurrentUser?: boolean;
+};
+
+export type ReviewSubmitRequest = {
+    reviewTitle: string;
+    reviewText: string;
+    rating: number;
 };
 
 export async function getProductReviews(asin: string): Promise<ProductReview[]> {
     const res = await fetch(`${BASE_URL}/api/products/${asin}/reviews`, {
         cache: "no-store",
+        headers: { ...authHeaders() },
+    });
+    if (!res.ok) throw new Error("Failed to fetch reviews");
+    return res.json();
+}
+
+export async function getProductAiSummary(asin: string): Promise<string> {
+    try {
+        const res = await fetch(`${BASE_URL}/api/products/asin/${asin}/ai-summary`, {
+            cache: "no-store",
+        });
+        if (!res.ok) return "";
+        const data = await res.json() as { status?: string; summary?: string };
+        return data?.summary ?? "";
+    } catch {
+        return "";
+    }
+}
+
+export async function submitProductReview(asin: string, data: ReviewSubmitRequest): Promise<ProductReview> {
+    const res = await fetch(`${BASE_URL}/api/products/${asin}/reviews`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(data),
     });
     if (!res.ok) {
-        throw new Error("Failed to fetch reviews");
+        let errBody = "";
+        try { errBody = await res.text(); } catch { /* ignore */ }
+        console.error("submitProductReview failed", res.status, errBody);
+        throw new Error(`[${res.status}] ${errBody || "Failed to submit review"}`);
     }
     return res.json();
+}
+
+export async function generateCoupon(): Promise<{ status: string; code: string; message: string }> {
+    const res = await fetch(`${BASE_URL}/api/discounts/generate`, {
+        method: "POST",
+        headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to generate coupon");
+    return res.json();
+}
+
+export async function applyCoupon(code: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/api/discounts/apply?code=${encodeURIComponent(code)}`, {
+        headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error("Invalid or expired coupon");
 }
 
 export async function getPublicAnnouncements(): Promise<PublicAnnouncement[]> {

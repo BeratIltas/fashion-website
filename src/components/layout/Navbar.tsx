@@ -302,7 +302,7 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
   const handleLogout = async () => {
     await logout();
     setOpenMenu(null);
-    window.location.reload();
+    router.push("/login");
   };
 
   return (
@@ -524,7 +524,7 @@ export default function Navbar({ transparentOnTop = false }: { transparentOnTop?
                   onMouseEnter={() => setOpenMenu("notifications")}
                 >
                   <Bell size={18} />
-                  {hydrated && announcements.length > 0 && (
+                  {hydrated && user && announcements.length > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] text-white">
                       {announcements.length > 9 ? "9+" : announcements.length}
                     </span>
