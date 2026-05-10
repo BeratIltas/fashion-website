@@ -4,18 +4,20 @@ import ProductGrid from "@/components/sections/ProductGrid";
 import { filterProducts } from "@/lib/api";
 
 export default async function HomePage() {
-  const products = await filterProducts({}, { page: 0, size: 8 });
-  const products2 = await filterProducts({}, { page: 4, size: 8 });
+  const [products, products2, orbitProducts] = await Promise.all([
+    filterProducts({}, { page: 0, size: 8 }),
+    filterProducts({}, { page: 4, size: 8 }),
+    filterProducts({}, { page: 8, size: 7 }),
+  ]);
 
-  const orbitItems = [
-    { id: "1", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "2", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "3", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "4", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "5", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "6", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" },
-    { id: "7", src: "https://static.zara.net/assets/public/fa98/1d09/cb3c477faf92/9fa1d00d07ab/02634200434-p/02634200434-p.jpg?ts=1771952536494&w=563" }
-  ];
+  const orbitItems = orbitProducts
+    .filter((p) => p.allImages?.length > 0)
+    .map((p) => ({
+      id: p.asin,
+      src: p.allImages[0],
+      alt: p.title,
+      href: `/product/${p.asin}`,
+    }));
 
   return (
     <>

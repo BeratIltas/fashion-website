@@ -17,7 +17,14 @@ export default function ShellWrapper({ children }: { children: React.ReactNode }
     <>
       {!isDashboard && (
         <>
-          <PromoBar text="Your orders will be shipped within 3-7 days." repeatCount={10} speedSeconds={60} />          
+          <PromoBar
+            texts={[
+              "Your orders will be shipped within 3–7 days.",
+              "Free 15-day returns on all orders — no questions asked.",
+            ]}
+            repeatCount={6}
+            speedSeconds={60}
+          />
           <Suspense fallback={<div className="fixed left-0 top-9 z-50 h-16 w-full" aria-hidden="true" />}>
             <Navbar transparentOnTop />
           </Suspense>

@@ -18,7 +18,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white">
       {/* Newsletter Section */}
-      <div className="border-b border-neutral-800">
+      {/* <div className="border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
@@ -43,7 +43,7 @@ export default function Footer() {
             </form>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -142,11 +142,11 @@ export default function Footer() {
         </div>
 
         {/* Large Brand Name */}
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <h2 className={`text-[80px] md:text-[120px] lg:text-[160px] font-bold leading-none tracking-tight ${playfair.className}`}>
             Miragé
           </h2>
-        </div>
+        </div> */}
 
         {/* Copyright */}
         <div className="text-center pt-8 border-t border-neutral-800">

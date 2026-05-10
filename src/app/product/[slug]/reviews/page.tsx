@@ -250,7 +250,7 @@ export default function ProductReviewsPage() {
             </div>
 
             {/* Verified only toggle */}
-            <button
+            {/* <button
               type="button"
               onClick={() => setVerifiedOnly((v) => !v)}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
@@ -261,7 +261,7 @@ export default function ProductReviewsPage() {
             >
               <BadgeCheck size={11} />
               Verified only
-            </button>
+            </button> */}
 
             {/* Sort dropdown */}
             <div className="relative ml-auto">

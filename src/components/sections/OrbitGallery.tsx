@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 
-type Item = { id: string; src: string; alt?: string };
+type Item = { id: string; src: string; alt?: string; href?: string };
 
 export default function OrbitGallery({
   title = "See our community\nin modern silhouettes",
@@ -46,6 +47,7 @@ export default function OrbitGallery({
     velocity: 0,
     lastX: 0,
     lastTime: 0,
+    hasDragged: false,
   });
 
   //  Görünür aralık optimizasyonu için: önceki görünür index aralığı
@@ -167,6 +169,7 @@ export default function OrbitGallery({
     s.velocity = 0;
     s.lastX = clientX;
     s.lastTime = performance.now();
+    s.hasDragged = false;
 
     if (containerRef.current) containerRef.current.style.cursor = "grabbing";
   }, []);
@@ -177,6 +180,7 @@ export default function OrbitGallery({
 
       const s = state.current;
       const deltaX = s.startX - clientX;
+      if (Math.abs(deltaX) > 6) s.hasDragged = true;
 
       const now = performance.now();
       const deltaTime = now - s.lastTime;
@@ -296,9 +300,10 @@ export default function OrbitGallery({
   }, [loopItems, renderCards]);
 
   const titleLines = useMemo(() => title.split("\n"), [title]);
+  const router = useRouter();
 
   return (
-    <section className="relative mt-16 overflow-hidden">
+    <section className="relative overflow-hidden">
       <div className="w-full">
         <div className="relative bg-white py-12">
           {/* Center content */}
@@ -360,9 +365,14 @@ export default function OrbitGallery({
                     backfaceVisibility: "hidden",
                     transformOrigin: "center center",
                   }}
+                  onClick={() => {
+                    if (item.href && !state.current.hasDragged) {
+                      router.push(item.href);
+                    }
+                  }}
                 >
                   <div
-                    className="overflow-hidden rounded-3xl bg-neutral-100"
+                    className={`overflow-hidden rounded-3xl bg-neutral-100 ${item.href ? "cursor-pointer" : ""}`}
                     style={{
                       width: cfg.cardWidth,
                       height: cfg.cardHeight,
