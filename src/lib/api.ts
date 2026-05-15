@@ -536,6 +536,44 @@ export async function getMyOrders(): Promise<Order[]> {
     return res.json();
 }
 
+// ─── Returns API ────────────────────────────────────────────────────────────────
+
+export type ReturnItem = {
+    id: number;
+    orderId: number;
+    userId: number;
+    reason: string;
+    status: string;
+    requestDate: string;
+    resolvedDate: string | null;
+    sellerNote: string | null;
+};
+
+export async function submitReturn(orderId: number, reason: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/api/returns/${orderId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) {
+        let errBody = "";
+        try { errBody = await res.text(); } catch { /* ignore */ }
+        throw new Error(`[${res.status}] ${errBody || "Failed to submit return request"}`);
+    }
+}
+
+export async function getMyReturns(): Promise<ReturnItem[]> {
+    const res = await fetch(`${BASE_URL}/api/returns/my`, {
+        cache: "no-store",
+        headers: { ...authHeaders() },
+    });
+    if (!res.ok) throw new Error("Failed to fetch returns");
+    return res.json();
+}
+
 // ─── Favorites API ──────────────────────────────────────────────────────────────
 
 export type FavoriteItem = {

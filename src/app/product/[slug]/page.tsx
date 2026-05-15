@@ -220,12 +220,6 @@ export default async function ProductPage({
               {/* CTA Buttons */}
               <div className="mt-8 flex flex-col gap-3">
                 <AddToCartButton asin={product.asin} fullWidth label="Add to Cart" />
-                <button
-                  type="button"
-                  className="w-full rounded-2xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-neutral-900 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-[0.98]"
-                >
-                  Buy Now
-                </button>
               </div>
 
               {/* Seller */}

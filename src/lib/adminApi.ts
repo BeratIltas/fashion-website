@@ -469,6 +469,39 @@ export async function updateSellerOrderStatus(orderId: number, status: string): 
   return handleResponse<SellerOrder>(res, "Failed to update order status");
 }
 
+// ─── Seller Returns ──────────────────────────────────────────────────────────
+
+export type SellerReturn = {
+  id: number;
+  orderId: number;
+  userId: number;
+  reason: string;
+  status: string;
+  requestDate: string;
+  resolvedDate: string | null;
+  sellerNote: string | null;
+};
+
+export async function getSellerReturns(): Promise<SellerReturn[]> {
+  const res = await fetch(`${BASE_URL}/api/seller/returns`, {
+    cache: "no-store",
+    headers: adminHeaders(),
+  });
+  return handleResponse<SellerReturn[]>(res, "Failed to fetch seller returns");
+}
+
+export async function resolveSellerReturn(id: number, status: string, sellerNote: string): Promise<SellerReturn> {
+  const token = getAdminToken();
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers["x-auth-token"] = token;
+  const res = await fetch(`/api/seller/returns/${id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ status, sellerNote }),
+  });
+  return handleResponse<SellerReturn>(res, "Failed to resolve return");
+}
+
 // ─── Discounts ────────────────────────────────────────────────────────────────
 
 export async function generateCoupon(): Promise<string> {

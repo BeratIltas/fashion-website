@@ -102,13 +102,23 @@ body {
   display: none;
 }
 
+/* ── AI Chat typing indicator ── */
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.35; }
+  30%            { transform: translateY(-4px); opacity: 1;    }
+}
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .promo-marquee-track,
   .auth-success-panel,
   .auth-success-ring,
   .auth-confetti,
   .animate-cart-check,
-  .animate-cart-ping {
+  .animate-cart-ping,
+  .animate-typing-dot {
     animation: none;
   }
 }

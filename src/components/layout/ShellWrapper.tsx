@@ -7,6 +7,9 @@ import Footer from "@/components/layout/Footer";
 import PromoBar from "@/components/layout/PromoBar";
 import CouponModal from "@/components/CouponModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { ChatProvider } from "@/contexts/ChatContext";
+import ChatButton from "@/components/chat/ChatButton";
+import ChatDrawer from "@/components/chat/ChatDrawer";
 
 export default function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,7 +23,7 @@ export default function ShellWrapper({ children }: { children: React.ReactNode }
           <PromoBar
             texts={[
               "Your orders will be shipped within 3–7 days.",
-              "Free 15-day returns on all orders — no questions asked.",
+              "Free 14-day returns on all orders — no questions asked.",
             ]}
             repeatCount={6}
             speedSeconds={60}
@@ -35,6 +38,13 @@ export default function ShellWrapper({ children }: { children: React.ReactNode }
 
       {pendingCoupon && !pathname.startsWith("/login") && !pathname.startsWith("/register") && (
         <CouponModal code={pendingCoupon} onClose={clearPendingCoupon} />
+      )}
+
+      {!isDashboard && (
+        <ChatProvider>
+          <ChatButton />
+          <ChatDrawer />
+        </ChatProvider>
       )}
     </>
   );
